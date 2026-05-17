@@ -16,3 +16,9 @@ __pycache__/
 
 # PDFs created during testing
 *_수정본.pdf
+
+# PyInstaller / Packaging
+dist/
+build/
+*.spec
+
