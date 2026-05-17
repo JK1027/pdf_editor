@@ -1,0 +1,41 @@
+import fitz  # PyMuPDF
+from PIL import Image
+
+class PDFService:
+    def __init__(self):
+        self.doc = None
+
+    def open_pdf(self, path: str):
+        if self.doc:
+            self.close()
+        self.doc = fitz.open(path)
+
+    def get_page_image(self, page_num: int, dpi: int = 150) -> Image.Image:
+        """Returns a PIL Image for the given page number (0-indexed)."""
+        if not self.doc:
+            raise ValueError("No PDF document is open.")
+        if page_num < 0 or page_num >= len(self.doc):
+            raise IndexError("Page number out of range.")
+
+        page = self.doc[page_num]
+        
+        # Calculate matrix for DPI. Default fitz DPI is 72.
+        zoom = dpi / 72.0
+        mat = fitz.Matrix(zoom, zoom)
+        
+        pix = page.get_pixmap(matrix=mat, alpha=False)
+        
+        # Convert fitz pixmap to PIL Image
+        # "RGB" since alpha=False
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        return img
+
+    def get_page_count(self) -> int:
+        if not self.doc:
+            return 0
+        return len(self.doc)
+
+    def close(self):
+        if self.doc:
+            self.doc.close()
+            self.doc = None
