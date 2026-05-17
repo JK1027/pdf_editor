@@ -3,9 +3,12 @@ import os
 
 class EditorService:
     @staticmethod
-    def apply_overlay(doc: fitz.Document, page_num: int, ui_rect: tuple, text: str, dpi: int = 150):
+    def apply_overlay(doc: fitz.Document, page_num: int, ui_rect: tuple, text: str, text_x: float, text_y: float, ui_fontsize: int, color: tuple = (0, 0, 0), is_bold: bool = False, dpi: int = 150):
         """
         ui_rect: (x0, y0, x1, y1) in canvas pixels.
+        text_x, text_y: Anchor Point (Bottom-Left baseline) in UI pixels.
+        color: RGB tuple (0~255, 0~255, 0~255)
+        is_bold: If True, uses bold font.
         Converts to PDF points (72 DPI) and applies whiteout + text.
         """
         if not doc or page_num < 0 or page_num >= len(doc):
@@ -25,21 +28,31 @@ class EditorService:
         
         # 2. Insert Text
         if text.strip():
-            font_path = r"C:\Windows\Fonts\malgun.ttf"
+            if is_bold:
+                font_path = r"C:\Windows\Fonts\malgunbd.ttf"
+                fontname = "malgunbd"
+            else:
+                font_path = r"C:\Windows\Fonts\malgun.ttf"
+                fontname = "malgun"
+                
             if not os.path.exists(font_path):
                 # Fallback to default if malgun is not found
                 font_path = None
                 
-            # Positioning text slightly below the top-left corner of the rect
-            # Assuming fontsize 11, y-offset around 11 points for the baseline
-            text_point = fitz.Point(rect.x0 + 2, rect.y0 + 11)
+            # Both Tkinter anchor="sw" and PyMuPDF Point use the Bottom-Left baseline.
+            # So we can just scale the UI point directly!
+            text_point = fitz.Point(text_x * scale, text_y * scale)
+            pdf_fontsize = ui_fontsize * scale
+            
+            # Convert RGB 0~255 tuple to PyMuPDF's 0.0~1.0 float tuple
+            pdf_color = (color[0] / 255.0, color[1] / 255.0, color[2] / 255.0)
             
             if font_path:
                 # Insert using specific TrueType Font (for Korean support)
-                page.insert_text(text_point, text, fontname="malgun", fontfile=font_path, fontsize=11, color=(0, 0, 0))
+                page.insert_text(text_point, text, fontname=fontname, fontfile=font_path, fontsize=pdf_fontsize, color=pdf_color)
             else:
                 # Basic ASCII fallback
-                page.insert_text(text_point, text, fontsize=11, color=(0, 0, 0))
+                page.insert_text(text_point, text, fontsize=pdf_fontsize, color=pdf_color)
 
     @staticmethod
     def save_pdf(doc: fitz.Document, original_path: str) -> str:
