@@ -1,5 +1,6 @@
 import fitz
 import os
+from utils.resource import get_resource_path
 
 class EditorService:
     @staticmethod
@@ -29,14 +30,20 @@ class EditorService:
         # 2. Insert Text
         if text.strip():
             if is_bold:
-                font_path = r"C:\Windows\Fonts\malgunbd.ttf"
+                sys_font_path = r"C:\Windows\Fonts\malgunbd.ttf"
+                bundled_font_path = get_resource_path(os.path.join("assets", "fonts", "malgunbd.ttf"))
                 fontname = "malgunbd"
             else:
-                font_path = r"C:\Windows\Fonts\malgun.ttf"
+                sys_font_path = r"C:\Windows\Fonts\malgun.ttf"
+                bundled_font_path = get_resource_path(os.path.join("assets", "fonts", "malgun.ttf"))
                 fontname = "malgun"
                 
-            if not os.path.exists(font_path):
-                # Fallback to default if malgun is not found
+            # Fallback 로직: 내장 폰트 -> 시스템 폰트 -> 없음(기본)
+            if os.path.exists(bundled_font_path):
+                font_path = bundled_font_path
+            elif os.path.exists(sys_font_path):
+                font_path = sys_font_path
+            else:
                 font_path = None
                 
             # Both Tkinter anchor="sw" and PyMuPDF Point use the Bottom-Left baseline.

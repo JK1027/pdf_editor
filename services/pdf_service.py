@@ -1,5 +1,6 @@
 import fitz  # PyMuPDF
 from PIL import Image
+from services.editor_service import EditorService
 
 class PDFService:
     def __init__(self):
@@ -34,6 +35,16 @@ class PDFService:
         if not self.doc:
             return 0
         return len(self.doc)
+
+    def apply_overlay(self, page_num: int, ui_rect: tuple, text: str, text_x: float, text_y: float, ui_fontsize: int, color: tuple = (0, 0, 0), is_bold: bool = False, dpi: int = 150):
+        if not self.doc:
+            raise ValueError("No PDF document is open.")
+        EditorService.apply_overlay(self.doc, page_num, ui_rect, text, text_x, text_y, ui_fontsize, color, is_bold, dpi)
+
+    def save_pdf(self, original_path: str) -> str:
+        if not self.doc:
+            raise ValueError("No PDF document is open.")
+        return EditorService.save_pdf(self.doc, original_path)
 
     def close(self):
         if self.doc:
